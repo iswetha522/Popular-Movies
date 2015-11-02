@@ -11,23 +11,21 @@ import com.squareup.picasso.Picasso;
 
 public class ImageAdapter extends BaseAdapter {
     private Context context;
-    private String[] images;
+    private Movie[] movies;
 
-    public ImageAdapter(Context c) {
-        this.context = c;
-        images = new String[]{"http://weknowyourdreams.com/images/flowers/flowers-02.jpg",
-                "https://tpc.googlesyndication.com/simgad/11674298433767998486",
-                "http://www.hdwallpapersimages.com/wp-content/uploads/images/Cute-Blue-Eyes-Puppy-Images.jpg"};
+    public ImageAdapter(Movie[] movies, Context context) {
+        this.movies = movies;
+        this.context = context;
     }
 
     @Override
     public int getCount() {
-        return images.length;
+        return movies.length;
     }
 
     @Override
     public Object getItem(int position) {
-        return images[position];
+        return movies[position];
     }
 
     @Override
@@ -38,15 +36,17 @@ public class ImageAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ImageView imageView;
+        String posterPath = movies[position].getPoster_path();
+        String imageUrl = "http://image.tmdb.org/t/p/w185" + posterPath;
         if(convertView==null) {
              imageView = new ImageView(context);
-            imageView.setLayoutParams(new GridView.LayoutParams(200, 200));
-            Picasso.with(context).load(images[position]).into(imageView);
+            imageView.setLayoutParams(new GridView.LayoutParams(450, 450));
+            Picasso.with(context).load(imageUrl).into(imageView);
         }
         else
         {
              imageView = (ImageView) convertView;
-            Picasso.with(context).load(images[position]).into(imageView);
+            Picasso.with(context).load(imageUrl).into(imageView);
         }
             return imageView;
     }

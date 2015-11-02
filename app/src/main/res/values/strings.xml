@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">Popular Movies</string>
-
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string-array name = "sort_by">
+        <item>popularity</item>
+        <item>original_title</item>
+        <item>vote_average</item>
+        <item>vote_count</item>
+    </string-array>
 </resources>
