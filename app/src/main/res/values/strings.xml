@@ -7,5 +7,6 @@
         <item>original_title</item>
         <item>vote_average</item>
         <item>vote_count</item>
+        <item>favorites</item>
     </string-array>
 </resources>

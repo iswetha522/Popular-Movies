@@ -1,6 +1,8 @@
 package com.example.android.popularmovies;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,32 +23,44 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
+import java.util.ArrayList;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private GridView gridView;
-    private Spinner spinner;
+    @Bind(R.id.sort_by_spinner)
+    Spinner spinner;
+    @Bind(R.id.gridview)
+    GridView gridView;
+
+    private Movie[] movies;
+    private Context context = this;
+
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        spinner = (Spinner) findViewById(R.id.sort_by_spinner);
-        ArrayAdapter adapter = ArrayAdapter.createFromResource(this,R.array.sort_by,android.R.layout.simple_spinner_item);
+        sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+
+        ArrayAdapter adapter = ArrayAdapter.createFromResource(this, R.array.sort_by, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
-        gridView = (GridView) findViewById(R.id.gridview);
 
         gridView.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
-                Intent i = new Intent(getApplicationContext(), SingleViewActivity.class);
+                Intent i = new Intent(getApplicationContext(), SingleMovieActivity.class);
                 Movie movie = (Movie) (((GridView) parent).getAdapter().getItem(position));
                 i.putExtra("movie", movie);
-                startActivity(i);
+                startActivityForResult(i, 1);
             }
 
         });
@@ -54,9 +68,21 @@ public class MainActivity extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-               String selectedItem =  parent.getItemAtPosition(position).toString();
-                Log.v("Selected" , selectedItem);
-                refreshMovies(selectedItem);
+                String selectedItem = parent.getItemAtPosition(position).toString();
+                Log.v("Selected", selectedItem);
+                if(selectedItem.equals("favorites")){
+                    ArrayList<Movie> favoriteMovies = new ArrayList<Movie>();
+                    for(int i = 0; i < movies.length; i++){
+                        Movie mv = movies[i];
+                        if(mv.isFavorite()){
+                            favoriteMovies.add(mv);
+                        }
+                    }
+                    gridView.setAdapter(new ImageAdapter(favoriteMovies.toArray(new Movie[]{}), context));
+
+                }else {
+                    refreshMovies(selectedItem);
+                }
             }
 
             @Override
@@ -66,10 +92,20 @@ public class MainActivity extends AppCompatActivity {
         });
 
         String sortValue = "popularity";
-        refreshMovies(sortValue);
+
+        Gson gson = new Gson();
+        String moviesJson = sharedPref.getString("movies", gson.toJson(new Movie[]{}));
+        movies = gson.fromJson(moviesJson, Movie[].class);
+
+
+        if(movies == null || movies.length == 0){
+            refreshMovies(sortValue);
+        }else {
+            gridView.setAdapter(new ImageAdapter(movies, getApplicationContext()));
+        }
     }
 
-    private void refreshMovies(String sortValue){
+    private void refreshMovies(String sortValue) {
         OkHttpClient okHttpClient = new OkHttpClient();
         String requestUrl = "http://api.themoviedb.org/3/discover/movie?sort_by=" + sortValue + ".desc&api_key=[YOUR API KEY]&page=1";
         Request request = new Request.Builder().url(requestUrl).build();
@@ -90,12 +126,20 @@ public class MainActivity extends AppCompatActivity {
                         Log.v("OkHttp - string.value of response body", String.valueOf(response.body()));
                         Log.v("OkHttp - string.value of response", String.valueOf(response));
                         Gson gson = new Gson();
-                        final ImdbResponse imdbResponse = gson.fromJson(responseStr, ImdbResponse.class);
-                        Log.v("imdb response -  length ", String.valueOf(imdbResponse.getResults()));
+                        final MovieListResponse movieListResponse = gson.fromJson(responseStr, MovieListResponse.class);
+
+                        movies = movieListResponse.getResults();
+
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putString("movies", gson.toJson(movies));
+                        editor.commit();
+
+
+                        Log.v("movieList response -  length ", String.valueOf(movies));
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                gridView.setAdapter(new ImageAdapter(imdbResponse.getResults(), getApplicationContext()));
+                                gridView.setAdapter(new ImageAdapter(movies, getApplicationContext()));
                             }
                         });
 
@@ -107,9 +151,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-
-
     }
 
     @Override
@@ -132,5 +173,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
+                Movie movie = (Movie) (data.getExtras().get("movie"));
+
+                for (int i = 0; i < movies.length ; i++) {
+                    Movie mv = movies[i];
+                    if (mv.getId() == movie.getId()) {
+                        movies[i] = movie;
+                    }
+                }
+            }
+        }
     }
 }

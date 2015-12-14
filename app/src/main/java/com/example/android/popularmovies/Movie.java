@@ -14,9 +14,9 @@ public class Movie implements Serializable {
     private String poster_path;
     private double popularity;
     private String title;
-    private boolean video;
     private double vote_average;
     private int vote_count;
+    private boolean favorite = false;
 
     public Movie() {
 
@@ -110,14 +110,6 @@ public class Movie implements Serializable {
         this.title = title;
     }
 
-    public boolean isVideo() {
-        return video;
-    }
-
-    public void setVideo(boolean video) {
-        this.video = video;
-    }
-
     public double getVote_average() {
         return vote_average;
     }
@@ -133,5 +125,9 @@ public class Movie implements Serializable {
     public void setVote_count(int vote_count) {
         this.vote_count = vote_count;
     }
+
+    public boolean isFavorite() { return favorite; }
+
+    public void setFavorite(boolean favorite) { this.favorite = favorite; }
 }
 

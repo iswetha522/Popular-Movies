@@ -3,13 +3,13 @@ package com.example.android.popularmovies;
 
 import java.io.Serializable;
 
-public class ImdbResponse implements Serializable{
+public class MovieListResponse implements Serializable{
     private int page;
     private Movie[] results;
     private int total_pages;
     private int total_results;
 
-    public ImdbResponse(){
+    public MovieListResponse(){
 
     }
 
